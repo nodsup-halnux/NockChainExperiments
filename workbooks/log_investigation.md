@@ -53,13 +53,31 @@ What about disconnection SE Events ("friendship ended")? "friendship ended"
 | Node 5 | 266,290    | 5,259                    | 1.97%      |
 | Node 6 | 34,460     | 270                      | 0.783%     |
 
-There isn't any particlarly strong trend we can see in these tables. But they lead to the following Testable Hypothesis (TH1):  **Running fewer nodes (just 2) will yield better metrics (higher mining %, and less block querying. Disconnections are independent).
+There isn't any particlarly strong trend we can see in these tables. But they lead to the following Testable Hypothesis (TH1): 
 
 ## Testible Hypothesis 1:
 
-To perform our test, a 126GB machine with 16 vCPUs was launched. Two nodes were activated, and run for about 8 hour straight.  The three summary tables are below.
+ **Running fewer nodes (2 v.s 4-6) on a larger Droplet should result in better log file metrics (higher mining %, and less block querying).** 
+
+To perform our test, a 128GB machine with 16 vCPUs was launched. Two nodes were activated, and run for about ~10 hour straight. Note that previously, 4-6 nodes were run to get the data that was seen above. The three summary tables are below.
+
+**Results:**
+
+| Node   | Log Length | "FE" Lines | FE %  | RE Lines | RE %  | %mining Lines | %mining % |
+| ------ | ---------- | ---------- | ----- | -------- | ----- | ------------- | --------- |
+| Node 1 | 39,375     | 2,901      | 7.37% | 8,281    | 21.0% | 17            | 0.0432%   |
+| Node 2 | 4,938      | 1,935      | 39.2% | 959      | 19.4% | 94            | 1.90%     |
 
 
+These numbers are still quite poor, although Node 2 has increased its mining percentage by about 2.5x. They also vary quite a bit between the two nodes, as well as with the previous 6 nodes that were run earlier.
 
-We don't have enough data to suggst 
+Strangely, node2 also had a much different log length. Both ndoes have the same log leven (RUST_LOG=info), so this isn't a setting issue.
 
+At ths point, I will abandom other test configuratoins (2 nodes on 64GB machine), as I don't expect the metrics to be any better.
+
+
+**In short:** our goal is to have maximum mining, and minimum network querying and reconnection to the backbone. Despite the crudeness of counting log entries and calculating percentages, we appear to very far away from our goal, given the results we obtained.
+
+The common gripe of not being able to mine anything without extensive optiimizations **will now be taken more seriously**. All server optimizaitond and tests are complete, and can give no more boosts in performance.
+
+...Its time to deep dive into the code base.
