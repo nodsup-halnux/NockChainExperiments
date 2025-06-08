@@ -1,0 +1,24 @@
+/nockchain
+    /crates (Rust Libraries)
+    /hoon
+        /apps
+            /dumbnet
+                -> dumbnet comments
+                /lib
+                    -> comments
+            /wallet
+                -> comments
+        /common
+            /stark
+                -> comments
+            /table
+                /prover
+                    -> comments
+                /verifier
+                    -> comments
+                -> table comments
+            /ztd
+                -> comments
+        -> common comments
+        /dat
+            -> comments

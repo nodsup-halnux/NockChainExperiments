@@ -4,6 +4,7 @@
 /=  *  /common/zeke
 /=  *  /common/wrapper
 =<  ((moat |) inner)  :: wrapped kernel
+::A core that contains three state cells.
 =>
   |%
   +$  effect  [%command %pow prf=proof:sp dig=tip5-hash-atom block-commitment=noun-digest:tip5 nonce=noun-digest:tip5]

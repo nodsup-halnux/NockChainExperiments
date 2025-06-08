@@ -1,3 +1,5 @@
+
+:: Again, all the defs are in eight.hoon.
 /=  *  /common/zeke
 /*  constraints-0  %jam  /constraints/constraints-0/jam
 ^-  preprocess-0

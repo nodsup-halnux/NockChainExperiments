@@ -1,13 +1,15 @@
 |%
+:: Structure arms.
 +$  goof    [mote=term =tang]
 +$  wire    path
 +$  ovum    [=wire =input]
 +$  crud    [=goof =input]
 +$  input   [eny=@ our=@ux now=@da cause=*]
-::
+:: keep has a wet gate.
 ++  keep
   |*  inner=mold
-  =>
+  :: Compose two expresions, a core with 
+  => 
   |%
   +$  inner-state  inner
   +$  outer-state
@@ -44,7 +46,7 @@
       [*(list *) *inner-state]
     --
   --
-  ::
+  :: End of First Expression.
   |=  crash=?
   |=  inner=fort
   |=  hash=@uvI
@@ -97,4 +99,5 @@
       [effects ..poke(internal.outer internal.outer)]
     ==
   --
---
+:: End of Second Expression
+-- 

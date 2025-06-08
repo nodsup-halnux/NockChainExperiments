@@ -1,0 +1,133 @@
+Finding all comments in files, for directory ./nockchain-postlaunch-revised//hoon/apps/dumbnet/lib
+
+## types.hoon
+- Line 44: ::  you will not have lost any chain state if you lost pending state, you'd just have to
+- Line 45: ::  request data again from peers
+- Line 107: ::  commands only used during testing
+- Line 113: ::  commands that can only be performed if init-phase is %.y
+
+- Line 121: ::  commands that can only be performed if init-phase is %.n
+- Line 173: ::  Records reason for failure if %.n
+- Line 174: ::  Returns `object` if %.y
+- Line 175: ::  Used to surface cause to liar effect.
+- Line 180: ::  the runtime tracks who sent us which blocks to determine which peers to
+- Line 181: ::  ban for a bad block. an %add effect is emitted when a block has a valid
+- Line 182: ::  digest. this tells the runtime to add that block-id and peer-id to
+- Line 183: ::  MessageTracker and means %liar-block-id is now
+- Line 184: ::  possible for that block-id (see the libp2p driver for further
+- Line 185: ::  information). %remove means that that block-id has valid txs as well, so
+- Line 186: ::  it is no longer necessary for the driver to track that block-id.
+- Line 207: ::  $goof: kernel error type
+- Line 208: ::
+
+- Line 211: ::  $crud: kernel error wrapper
+- Line 214: ::  $pok: kernel poke type
+
+## pending.hoon
+- Line 9: ::  +find-ready-blocks: blocks for which .id was the last missing tx
+- Line 89: ::  +add-tx-not-in-pending-block:
+- Line 91: ::    these transactions are treated differently from transactions
+- Line 92: ::    that are in a pending block. we track their inputs and when
+- Line 93: ::    we heard them. if we hear another transaction using some
+- Line 94: ::    of the same inputs, we discard it. if we heard the transaction
+- Line 95: ::    sufficiently long ago, we drop it from pending state.
+- Line 104: ::  +add-tx-in-pending-block:
+- Line 106: ::    when a tx is in a pending block, we ignore whether it uses
+- Line 107: ::    inputs that have been spent in the heaviest balance, or
+- Line 108: ::    when we heard it.
+- Line 144: ::  +find-pending-tx-ids: pending tx-ids for pending blocks
+## miner.hoon
+- Line 6: :: everything to do with mining and mining state
+- Line 11: ::  +set-mining: set .mining
+- Line 17: ::  +set-pubkey: set .pubkey
+- Line 25: ::  +set-shares validate and set .shares
+- Line 43: ::  +update-timestamp: updates timestamp on candidate block if needed
+- Line 45: ::    this should be run every time we get a poke.
+- Line 66: ::  +heard-new-tx: potentially changes candidate block in reaction to a raw-tx
+- Line 116: ::  +heard-new-block: refreshes the candidate block to be mined in reaction to a new block
+- Line 118: ::    when we hear a new heaviest block, we need to update the candidate we're attempting
+- Line 119: ::    to mine. that means we should update the parent and page number of the block, and carry
+- Line 120: ::    over any transactions we had previously been attempting to include that werent
+- Line 121: ::    included in the most recent block.
+
+
+## derived.hoon
+- Line 7: ::  +update: update metadata derived from consensus state
+
+## consensus.hoon
+- Line 6: ::  this library is where _every_ update to the consensus state
+- Line 7: ::  occurs, no matter how minor.
+- Line 12: ::  +set-genesis-seal: set .genesis-seal
+- Line 60: ::
+- Line 61: ::  +compute-target: find the new target
+- Line 62: ::
+- Line 63: ::    this is supposed to be mathematically identical to
+- Line 64: ::    https://github.com/bitcoin/bitcoin/blob/master/src/pow.cpp
+- Line 65: ::
+- Line 66: ::    note that this works differently from what you might expect.
+- Line 67: ::    we/bitcoin compute "target" where the larger the number is,
+- Line 68: ::    the easier the block is to find. difficulty is just a human
+- Line 69: ::    friendly form to read target in. that's why this appears
+- Line 70: ::    backwards, where e.g. an epoch that takes 2x as long as the
+- Line 71: ::    desired duration results in doubling the target.
+
+- Line 76: ::
+- Line 77: ::  +compute-target-raw: helper for +compute-target
+- Line 78: ::
+- Line 79: ::    makes it easier for unit tests. we currently do not use
+- Line 80: ::    bignum arithmetic due to lack of testing and it not yet
+- Line 81: ::    being necessary. once consensus logic starts being run
+- Line 82: ::    in the zkvm, we will need to change to bignum arithmetic.
+
+- Line 106: ::
+- Line 107: ::  +compute-epoch-duration: computes the duration of an epoch in seconds
+- Line 108: ::
+- Line 109: ::    to mitigate certain types of "time warp" attacks, the timestamp we mark
+- Line 110: ::    as the end of an epoch is the median time of the last 11 blocks in the
+- Line 111: ::    epoch. this also happens to be the min timestamp for the first block
+- Line 112: ::    in the following epoch, which is already kept track of in
+- Line 113: ::    .min-timestamps, where the value at a given block-id is the min
+- Line 114: ::    timestamp of block that has that block-id as its parent. thus
+- Line 115: ::    the duration of a given epoch is the difference between the minimum timestamp
+- Line 116: ::    of the first block of the next epoch and the first block of the current
+- Line 117: ::    epoch.
+
+- Line 129: ::
+- Line 130: ::  +check-size: check on page size, requires all raw-tx
+
+- Line 135: ::
+
+- Line 196: ::
+- Line 197: ::  +validate-page-without-txs-da: helper for urbit time
+
+- Line 201: ::
+- Line 202: ::  +validate-page-without-txs: with parent, without raw-txs
+- Line 203: ::
+- Line 204: ::    performs every check that can be done on a page when you
+- Line 205: ::    know its parent, except for validating the powork or digest,
+- Line 206: ::    but don't have all of the raw-txs. not to be performed on
+- Line 207: ::    genesis block, which has its own check. this check should
+- Line 208: ::    be performed before adding a block to pending state.
+
+- Line 282: ::
+- Line 283: ::  +validate-page-with-txs: to be run after all txs gathered
+- Line 284: ::
+- Line 285: ::    note that this does _not_ repeat earlier validation steps,
+- Line 286: ::    namely that done by +validate-page-withouts-txs and checking
+- Line 287: ::    the powork. it returns ~ if any of the checks fail, and
+- Line 288: ::    a $tx-acc otherwise, which is the datum needed to add the
+- Line 289: ::    page to consensus state.
+
+- Line 351: ::
+- Line 352: ::  +update-heaviest: set new heaviest block if it is so
+
+- Line 382: ::
+- Line 383: ::  +get-elders: get list of ancestor block IDs up to 24 deep
+- Line 384: ::  (ordered newest->oldest)
+
+- Line 404: ::
+
+- Line 406: ::  +update-min-timestamps: sets min timestamp of children of .id
+- Line 407: ::
+
+

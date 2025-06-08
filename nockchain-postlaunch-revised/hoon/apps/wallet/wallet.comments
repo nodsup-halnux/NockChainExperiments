@@ -1,0 +1,123 @@
+Finding all comments in files, for directory ./nockchain-postlaunch-revised//hoon/apps/wallet
+## wallet.hoon
+- Line 1: ::  /ker/wallet/wallet: nockchain wallet
+
+- Line 16: ::    $key: public or private key
+- Line 17: ::
+- Line 18: ::   both private and public keys are in serialized cheetah point form
+- Line 19: ::   they MUST be converted to base58 for export.
+- Line 20: ::
+
+- Line 26: ::    $coil: key and chaincode
+- Line 27: ::
+- Line 28: ::  a wallet consists of a collection of +coil (address and entropy pair). the
+- Line 29: ::  $cc (called a chain code elsewhere) allows for the deterministic
+- Line 30: ::  generation of child keys from a parent key without compromising other
+- Line 31: ::  branches of the hierarchy.
+- Line 32: ::
+- Line 33: ::  .key:  public or private key
+- Line 34: ::  .cc: associated entropy (chain code)
+- Line 35: ::
+
+- Line 37: ::
+- Line 38: ::    $meta: stored metadata for a key
+
+- Line 44: ::
+- Line 45: ::    $keys: path indexed map for keys
+- Line 46: ::
+- Line 47: ::  path format for keys state:
+- Line 48: ::
+- Line 49: ::  /keys                                                        ::  root path (holds nothing in its fil)
+- Line 50: ::  /keys/[t/master]/[key-type]/m/[coil/key]                     ::  master key path
+- Line 51: ::  /keys/[t/master]/[key-type]/[ud/index]/[coil/key]            ::  derived key path
+- Line 52: ::  /keys/[t/master]/[key-type]/[ud/index]/[coil/key]            ::  specific key path
+- Line 53: ::  /keys/[t/master]/[key-type]/[ud/index]/label/[label/label]   ::  key label path for derived key
+- Line 54: ::  /keys/[t/master]/[key-type]/m/label/[label/label]            ::  key label path for master key
+- Line 55: ::  /keys/[t/master]/seed/[seed/seed-phrase]                     ::  seed-phrase path
+- Line 56: ::
+- Line 57: ::  Note the terminal entry of the path holds that value, this value is the
+- Line 58: ::  non-unit `fil` in the $axal definition
+- Line 59: ::
+- Line 60: ::  where:
+- Line 61: ::  - [t/master] is the base58 encoded master public key as @t
+- Line 62: ::  - m denotes the master key
+- Line 63: ::  - [ud/index] is the derivation index as @ud
+- Line 64: ::  - [key-type] is either %pub or %prv
+- Line 65: ::  - [coil/key] is the key and chaincode pair. key is in serialized
+- Line 66: ::               format as a @ux, NOT base58.
+- Line 67: ::  - [seed/seed-phrase] is the seed phrase as a tape
+- Line 68: ::  - [label/label] is a label value
+- Line 69: ::
+- Line 70: ::  master key is stored under 'm'.
+- Line 71: ::  derived keys use incrementing indices starting from 0 under their master-key and key-type
+- Line 72: ::  labels are stored as children of their associated keys.
+- Line 73: ::  seed is a seed phrase and is only stored as a child of [t/master]
+- Line 74: ::
+
+- Line 76: ::
+- Line 77: ::    $draft-tree: structured tree of draft, input, and seed data
+- Line 78: ::
+- Line 79: ::  we use the axal structure to track the relationship between drafts,
+- Line 80: ::  inputs, and seeds. this allows us to navigate the tree and maintain
+- Line 81: ::  all the relationships without duplicating data.
+- Line 82: ::
+- Line 83: ::  paths in the draft-tree follow these conventions:
+- Line 84: ::
+- Line 85: ::  /draft/[draft-name]                    :: draft node
+- Line 86: ::  /draft/[draft-name]/input/[input-name] :: input in a draft
+- Line 87: ::  /input/[input-name]                    :: input node
+- Line 88: ::  /input/[input-name]/seed/[seed-name]   :: seed in an input
+- Line 89: ::  /seed/[seed-name]                      :: seed node
+- Line 90: ::
+
+- Line 94: ::    $draft-entity: entities stored in the draft tree
+- Line 95: ::
+
+- Line 101: ::
+- Line 102: ::  +master: master key pair
+
+- Line 118: ::  $cc: chaincode
+- Line 119: ::
+
+- Line 121: ::  $balance: wallet balance
+
+- Line 125: ::  $state: wallet state
+- Line 150: ::  $transaction: TODO
+
+- Line 237: ::  $seed-mask: tracks which fields of a $seed:transact have been set
+- Line 238: ::
+- Line 239: ::    this might have been better as a "unitized seed" but would have been
+- Line 240: ::    much more annoying to read the code
+
+- Line 249: ::  $preseed: a $seed:transact in process of being built
+
+- Line 251: ::
+- Line 252: ::  $spend-mask: tracks which field of a $spend:transact have been set
+
+- Line 355: ::TODO this probably shouldnt live in here
+- Line 380: ::  +edit: modify inputs
+
+- Line 453: ::
+- Line 454: ::  +draw: modify drafts
+
+- Line 512: ::
+- Line 513: ::  Convenience wrapper door for slip10 library
+- Line 514: ::  ** Never use slip10 directly in the wallet **
+- Line 541: ::  Derives public key from parent public key
+- Line 542: ::  index i is expected to be a bip32 style index
+- Line 543: ::  meaning that for the n-th child key, i=n.
+- Line 544: ::
+
+- Line 550: ::
+- Line 551: ::  Derives private key from parent private key
+- Line 552: ::  index i is expected to be a bip32 style index
+- Line 553: ::  meaning that for n-th child key: i = (n + 2^31)
+- Line 554: ::
+
+- Line 561: ::
+
+- Line 701: ::    +plan: core for managing draft relationships
+- Line 702: ::
+- Line 703: ::  provides methods for adding, removing, and navigating the draft tree.
+- Line 704: ::  uses the axal structure to maintain relationships between drafts, inputs,
+- Line 705: ::  and seeds.

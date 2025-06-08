@@ -1,3 +1,21 @@
+# This Cargo.toml file defines a Rust workspace, an organizational unit that manages multiple related packages 
+# (crates) under a unified build configuration. The [workspace] section lists 13 project members distributed 
+# across subdirectories like crates/nockvm, crates/nockchain, and crates/nockapp. These components are logically 
+# grouped to promote modularity, reuse, and coordinated dependency resolution. The workspace uses resolver version 2, which
+# provides more precise dependency resolution semantics across multiple packages.
+
+# The [workspace.package] and [workspace.dependencies] sections centralize common metadata and dependencies for member crates.
+# Version and edition are fixed at 0.1.0 and 2021, respectively. Internal dependencies are defined with local path references, 
+# ensuring intra-repo cohesion and ease of modification. External dependencies span cryptography, I/O, async runtimes, and 
+# telemetry—suggesting this project involves secure, networked applications with structured observability. Packages like libp2p, 
+# curve25519-dalek, and tokio reinforce a focus on decentralized or peer-to-peer operations with modern concurrency primitives.
+
+# Custom build profiles ([profile.*]) finely tune compilation behavior across development, test, and release contexts. 
+# The release profile is optimized for performance (opt-level = 3), link-time optimization (lto = "thin"), and constrained 
+# parallel compilation (codegen-units = 1) to maximize binary efficiency. The inclusion of debug symbols (debug = 1) even in
+# release indicates a need for introspection or profiling in deployed environments. Overall, this workspace defines a sophisticated, 
+# cryptographically aware, high-performance Rust system spanning virtual machines, blockchains, and runtime tooling.
+
 [workspace]
 members = [
     "crates/equix-latency",
@@ -115,7 +133,7 @@ tracing-test = "0.2.5"
 yaque = "0.6.6"
 
 
-# External dependencies
+# External dependencies  - stored in a /user/.rust folder as global packages.
 arrayref = "0.3.7"
 argon2 = "0.5.3"
 bardecoder = "0.5.0"

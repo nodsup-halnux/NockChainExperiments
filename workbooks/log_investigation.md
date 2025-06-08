@@ -3,17 +3,13 @@
 I have been running between 3 and 6 nodes for about 2 days, and I have generated a significant number of log entires for each node. Now that this data is acquired, we can investigate how the nodes are peforming. Using some simple estimates, we attempt to answer the following questions.
 
 
-
-### What kind of Informational Log entries are there?
-
-Excluding traces, errors and warnings, we see the following from inspection:
-
-
-
-
 ### Q: How can we estimate how much time each node is mining?
 
 There currently isn't advanced tools to check with, with the nockchain codebase. I use a simple estimate method to assess this: For each `node.log` file, I count the number of lines that have `[%mining ....` entry, vs every other type of entry found in the file. This yields a percentage of the time we spend mining per node.
+
+**Note that usage of log files to estimate mining time is crude, because the rate at which log messages appear can vary dramatically (form large bursts in 2 seconds, to nothing even after 1 minute). Also, out of the 20 threads that typically habit a process node, some may be doing work/mining, but not necessarily reporting it to console at all.**
+
+Still, I was curious just to see what the results were. They are quite poor with a base setup. 
 
 For the six nodes I was running my my machine, we observe the following:
 
@@ -42,7 +38,7 @@ Which look pretty anemic. Next, lets look at some other stats.  How often are ou
 
 We see a lot more variablility in the percentages here. 
 
-What about disconnection SE Events ("friendship ended")? "friendship ended"
+What about disconnection SE Events ("friendship ended")?
 
 | Node   | Log Length | "friendship ended" Lines | Percentage |
 | ------ | ---------- | ------------------------ | ---------- |
@@ -73,7 +69,7 @@ These numbers are still quite poor, although Node 2 has increased its mining per
 
 Strangely, node2 also had a much different log length. Both ndoes have the same log leven (RUST_LOG=info), so this isn't a setting issue.
 
-At ths point, I will abandom other test configuratoins (2 nodes on 64GB machine), as I don't expect the metrics to be any better.
+At ths point, I will abandon other test configurations (2 nodes on 64GB machine), as I don't expect the metrics to be any better.
 
 
 **In short:** our goal is to have maximum mining, and minimum network querying and reconnection to the backbone. Despite the crudeness of counting log entries and calculating percentages, we appear to very far away from our goal, given the results we obtained.
@@ -81,3 +77,15 @@ At ths point, I will abandom other test configuratoins (2 nodes on 64GB machine)
 The common gripe of not being able to mine anything without extensive optiimizations **will now be taken more seriously**. All server optimizaitond and tests are complete, and can give no more boosts in performance.
 
 ...Its time to deep dive into the code base.
+
+## Experiment 2:
+
+As per [this post](), there may have been a network attack while I was doing my testing (a DDOS node making too many requests, specifically for elder requests). Once again, I ran a VPS with 2 nodes and 128GB of RAM (for about 7 hours). Here are the reseults:
+
+| Node   | Log Length | "FE" Lines | FE %  | RE Lines | RE %  | %mining Lines | %mining % |
+| ------ | ---------- | ---------- | ----- | -------- | ----- | ------------- | --------- |
+| Node 1 | 89200     |   42    | X | 88,840    | 21.0% | X            | 0.0432%   |
+| Node 2 | 77877      |  50     | X | 77405      | 19.4% | X            | 1.90%     |
+
+Which is still abysmal. Perhaps the node was catching up? We need to figure out what the different log messages mean, so we need to depe dive into the code, as stated before.
+

@@ -1,3 +1,188 @@
+:: Summary of file:
+:: I. Core Data Types and Structures
+:: +constraint-degrees, +constraint-data, +constraints:
+::   Define how computational constraints are structured per table—
+::   grouped by type (boundary, row, transition, terminal, extra)
+::   with associated polynomial degrees.
+::
+:: +preprocess-0:
+::   Encapsulates per-table constraint metadata, enabling reuse across proofs.
+::
+:: +stark-config, +stark-input:
+::   Define global parameters such as expansion factor and security level,
+::   along with computation-independent verifier input.
+
+:: II. Prover Infrastructure and Polynomial Management
+:: ++compute-codeword-commitments:
+::   Central routine transforming trace columns into polynomial commitments.
+::   Includes interpolation (compute-table-polys),
+::   low-degree extension (compute-lde),
+::   and Merkle tree commitment (bp-build-merk-heap).
+::
+:: compute-table-polys:
+::   Interpolates each table column into a low-degree polynomial over the trace domain.
+::
+:: compute-lde:
+::   Extends these polynomials to a larger evaluation domain,
+::   suitable for FRI-based low-degree testing and proof generation.
+
+:: III. Degree Analysis and Constraint Handling
+:: ++degree-processing:
+::   Computes the degree bounds of constraint polynomials for each table,
+::   adjusting for trace length and type (boundary, row, etc.).
+::
+:: +constraints-w-deg:
+::   Holds constraints annotated with their effective degrees,
+::   essential for determining valid bounds and ensuring protocol soundness.
+
+:: IV. Composition Polynomial Generation
+:: ++compute-composition-poly, ++do-compute-composition-poly:
+::   Construct the full composition polynomial from trace and constraint inputs.
+::   Applies zerofiers to enforce boundary and transition conditions,
+::   aggregates constraint evaluations using arithmetic over bpolys.
+::
+:: Constructs like bpadd, bpdiv combine scaled constraint terms efficiently,
+::   maintaining the degree bound needed for STARK verification.
+:: If `is-extra` is false, skip the following computation and return `zero-bpoly`.
+:: Otherwise, compute the contribution of the `extra` constraints to the composition polynomial.
+:: Divide by the row zerofier polynomial to normalize domain alignment.
+:: Call `process-composition-constraints` to evaluate each extra constraint polynomial.
+:: Constraints are weighted using challenges (alpha, beta) extracted from `chals`.
+:: Challenge indices begin after boundary, row, transition, and terminal constraint counts.
+::
+:: ++process-composition-constraints:
+:: Processes a list of constraints paired with degree annotations and mp-ultra definitions.
+:: For each constraint:
+::   - Substitutes in the trace and dynamic values into the mp expression to generate a composition polynomial.
+::   - Retrieves two weights: alpha and beta from the weights array.
+::   - Constructs a term of the form `p(x) * (α·X^{D−D_j} + β)` to lift the polynomial to uniform degree D−1.
+::   - Accumulates the resulting polynomial contribution into the composition polynomial using `bpadd`.
+
+:: ++compute-deep:
+:: Computes the DEEP composition polynomial used in STARK proof opening.
+:: For each trace polynomial:
+::   - Converts it into field-based (fpoly) form.
+::   - Evaluates f(x) at two shifted points: Z and g·Z, computing `(f(x) - f(Z))/(x - Z)` and similar for gZ.
+::   - Forms a weighted linear combination of these evaluations using challenges and precomputed weights.
+:: This is done twice: once using `deep-challenge` and once using `comp-eval-point`, then the two are added.
+:: Additional composition pieces are incorporated similarly and summed with the trace contributions.
+
+:: ++weighted-linear-combo:
+:: Constructs a linear combination over rational expressions of the form `(f(x) - f(z)) / (x - z)`
+:: where each term is scaled by a weight.
+:: Each polynomial in the input list is offset by its corresponding opening value and normalized.
+:: The total is accumulated using field additions and multiplications.
+
+:: ++precompute-ntts:
+:: Precomputes FFT-based NTT (Number Theoretic Transform) encodings of a set of polynomials.
+:: Extends each polynomial to a specified length and computes its FFT over the target domain.
+:: Returns a list of all such transformed polynomials, combined using `weld` for merging.
+
+:: ++noun-get-zero-mults:
+:: Computes how often a given noun appears in the "zero" table.
+:: Used for determining multiplicity factors in exponent tables and external multipliers.
+:: Operates by analyzing tree structures representing data paths (axes) in a nock formula tree.
+:: Applies breadth-first transformations to align logical paths with computational representations.
+:: Updates a map of subtree multiplicities using the `put-tree` arm to accumulate counts.
+
+:: ++fink:
+:: The core interpreter that traverses a nock formula in depth-first order.
+:: Annotates each node with its axis (a breadth-first encoding of tree position).
+:: Sorts formula nodes by axis to prepare for breadth-first evaluation in compute tables.
+:: Builds a queue of evaluations and computes "extra data" per opcode.
+:: Generates structures like `formula-data` and `interpret-data` to facilitate compilation.
+
+:: ++interpret:
+:: The recursive arm used by `fink` to evaluate a nock formula.
+:: Handles each nock opcode (e.g., %0, %1, %2...) by applying the corresponding transformation.
+:: Tags each step with its axis, captures zeroes and decode information,
+:: and constructs a trace of intermediate computations and subformula products.
+:: Implements ternary axis encoding to support nock’s structure (e.g., three subformulas in `%2`).
+:: ++edit:
+::   Edits a noun tree at a given axis. If axis is 1, returns the new value.
+::   Otherwise, recursively navigates the tree based on the axis and modifies the relevant branch.
+::   Uses axis decoding (cap/mas) and pattern matches to update either the head (%2) or tail (%3).
+
+:: ++record-all:
+::   Records multiple zero substitutions in a zero-map structure.
+::   Rolls over a list of `[subject, axis, new-subject]` triples and records each using `record`.
+
+:: ++record:
+::   Records a single zero substitution in a nested map structure.
+::   If the entry does not exist, it initializes it.
+::   If it does exist, it increments the multiplicity count.
+
+:: ++record-cons:
+::   Records a decode entry for a formula in a decode map.
+::   Uses the key `[formula head tail]` and increments count.
+
+:: ++frag:
+::   Extracts a part of a noun at a given axis.
+::   Delegates to `frag-atom` if axis is atomic; otherwise, fails gracefully.
+
+:: ++frag-atom:
+::   Atom-specific fragment logic.
+::   Navigates down the noun tree according to the axis.
+::   Recursively selects head (%2) or tail (%3) until reaching axis 1.
+
+:: ++puzzle-nock:
+::   Constructs a proof-of-work "puzzle" from a block commitment and nonce.
+::   Absorbs both into a sponge function, produces random belts, generates a tree and a nock formula.
+::   Returns the subject and the generated formula.
+
+:: ++powork:
+::   Produces a synthetic nock formula for a given proof-of-work length.
+::   Uses opcode `%6` with a combination of opcodes `%3` and `%0`.
+
+:: ++gen-tree:
+::   Builds a binary tree from a list of atoms.
+::   Splits recursively to maintain a balanced shape.
+
+:: ++stark-engine-jet-hook:
+::   Dummy hook to enable jet support in `lib/stark/prover.hoon`.
+::   Required for proper runtime behavior of jetted code.
+
+:: ++stark-engine:
+::   Top-level configuration and calculator core for STARK parameters.
+::   Includes cryptographic constants, domain sizes, and constraint degree analysis.
+
+:: ++num-challenges:
+::   Returns the number of challenges used, defined by `num-chals:chal`.
+
+:: ++expand-factor:
+::   Calculates the domain expansion factor as a power of two.
+
+:: ++num-spot-checks:
+::   Determines number of FRI verifier queries per round.
+
+:: ++generator:
+::   Constant used as the field generator (7).
+
+:: ++fri-folding-deg:
+::   Degree of folding per FRI round, must be a power of 2 (e.g., 8).
+
+:: ++calc:
+::   Computes all STARK setup parameters from input table heights and constraint degree map.
+
+:: ++omega:
+::   Computes the ordered root of unity for FRI domains.
+
+:: ++fri-domain-len:
+::   Computes the full domain size as max padded trace length × expansion factor.
+
+:: ++fri:
+::   Packages all FRI parameters into a single structure.
+
+:: ++max-constraint-degree:
+::   Extracts the largest degree among all constraint types from a constraint-degrees struct.
+
+:: ++max-degree / ++do-max-degree:
+::   Compute
+
+
+
+
+
 /=  ztd-seven  /common/ztd/seven
 =>  ztd-seven
 ~%  %stark-core  ..tlib  ~
@@ -38,6 +223,7 @@
   ==
 ::
 ::  $stark-config: prover+verifier parameters unrelated to a particular computation
+::  Pin log factor and sec level to head.
 +$  stark-config
   $:  conf=[log-expand-factor=_6 security-level=_50]
       prep=preprocess-0
