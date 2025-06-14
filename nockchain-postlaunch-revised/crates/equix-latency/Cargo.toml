@@ -1,8 +1,0 @@
-[package]
-name = "equix-latency"
-version.workspace = true
-edition.workspace = true
-
-[dependencies]
-equix.workspace = true
-rand.workspace = true

@@ -87,8 +87,11 @@ Nockchain outputs RUST console logs for varoius components. Here are what some o
 
 - `Error: Os { code: 98, kind: AddrInUse, message: "Address already in use" }`Solution: delete the socket file in your local .socket folder.
 
+## Useful websites:
 
-
+- [Nockchain Forums](https://forum.nockchain.org/)
+- [Nockchain Status](https://status.nockchain.org/)
+- [Github Repo](https://github.com/zorp-corp/nockchain)
 
 
 

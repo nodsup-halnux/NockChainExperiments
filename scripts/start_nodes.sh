@@ -49,3 +49,4 @@ for i in $(seq 1 $TOTAL_NODES); do
   else
     echo "Environment file $ENV_FILE missing, skipping node $NODE_DIR"
   fi
+done

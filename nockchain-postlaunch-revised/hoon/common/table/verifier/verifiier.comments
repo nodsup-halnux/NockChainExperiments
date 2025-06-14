@@ -1,7 +1,0 @@
-Finding all comments in files, for directory ./nockchain-postlaunch-revised/hoon/common/table/verifier
-## compute.hoon
-- Line 72: ::  Set ions n=m
-- Line 92: ::  set ion to be 0
-
-## memory.hoon
-
